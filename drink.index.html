@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我超愛喝手搖 - 2026 數據分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #fffcf5 0%, #fff5f8 100%);
+            min-height: 100vh;
+        }
+
+        .day-card {
+            aspect-ratio: 1 / 1.1;
+            transition: all 0.2s ease-out;
+            border: 1px solid transparent;
+        }
+
+        .day-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px -3px rgba(255, 182, 193, 0.3);
+            z-index: 10;
+        }
+
+        .cup-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        input::placeholder { color: #d1d5db; }
+        
+        #days-grid {
+            transition: opacity 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 text-gray-800">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-8 px-2">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">🧋</span>
+                <h1 class="text-2xl font-black tracking-tight" style="color: #ff85a1;">我超愛喝手搖</h1>
+                <span class="text-xs font-bold text-pink-300 bg-pink-50 px-2 py-0.5 rounded-full">2026 Diary</span>
+            </div>
+            <p class="hidden sm:block text-xs font-medium text-pink-300 italic">Happiness in every cup.</p>
+        </header>
+        
+        <!-- Global Dashboard: All Time 2026 -->
+        <div class="flex flex-col space-y-3 w-full mb-8">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-[24px] px-4 py-4 shadow-sm border border-emerald-50 flex flex-col items-center">
+                    <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Favorite Shop / 最愛店家</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-emerald-400 text-sm">🏆</span>
+                        <span id="fav-shop" class="text-lg font-black text-emerald-500 truncate max-w-[120px]">-</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[24px] px-4 py-4 shadow-sm border border-purple-50 flex flex-col items-center">
+                    <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Top Drink / 最愛品項</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-purple-400 text-sm">✨</span>
+                        <span id="fav-item" class="text-lg font-black text-purple-500 truncate max-w-[120px]">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-[24px] px-4 py-3 shadow-sm border border-pink-50 flex flex-col items-center">
+                    <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">2026 Total Cups / 年度總杯數</span>
+                    <div class="flex items-baseline">
+                        <span id="total-count" class="text-xl font-black text-pink-400">0</span>
+                        <span class="ml-1 text-gray-400 text-[10px]">杯</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[24px] px-4 py-3 shadow-sm border border-blue-50 flex flex-col items-center">
+                    <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">2026 Total Cost / 年度總花費</span>
+                    <div class="flex items-baseline">
+                        <span class="mr-0.5 text-gray-400 text-[10px]">$</span>
+                        <span id="total-spending" class="text-xl font-black text-blue-400">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single Month Calendar View -->
+        <div class="bg-white rounded-[40px] p-6 shadow-xl shadow-pink-100/30 border border-white relative">
+            <!-- Navigation -->
+            <div class="flex justify-between items-center mb-3">
+                <button onclick="changeMonth(-1)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-pink-50 text-pink-400 hover:bg-pink-400 hover:text-white transition-all transform active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                
+                <div class="text-center">
+                    <h2 id="current-month-display" class="text-xl font-black text-gray-700 tracking-tight">January</h2>
+                    <p class="text-gray-300 text-[9px] font-bold tracking-[0.2em]">2026 CALENDAR</p>
+                </div>
+
+                <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-400 hover:bg-blue-400 hover:text-white transition-all transform active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Monthly Mini Dashboard: Summary for current month -->
+            <div class="flex justify-center gap-4 mb-6">
+                <div class="flex items-center gap-1.5 px-3 py-1 bg-pink-50/50 rounded-full border border-pink-100">
+                    <span class="text-[10px] font-black text-pink-300 uppercase">本月杯數</span>
+                    <span id="monthly-count" class="text-sm font-black text-pink-500">0</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 bg-blue-50/50 rounded-full border border-blue-100">
+                    <span class="text-[10px] font-black text-blue-300 uppercase">本月花費</span>
+                    <span class="text-[10px] text-blue-300">$</span>
+                    <span id="monthly-spending" class="text-sm font-black text-blue-500">0</span>
+                </div>
+            </div>
+
+            <!-- Week Header -->
+            <div class="grid grid-cols-7 text-center text-[10px] font-black text-gray-300 mb-4 uppercase tracking-widest">
+                <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+            </div>
+
+            <!-- Days Grid -->
+            <div id="days-grid" class="grid grid-cols-7 gap-3">
+                <!-- Days injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-pink-900/10 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white/95 rounded-[35px] w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 shadow-2xl border-4 border-white scrollbar-hide">
+            <div class="flex justify-between items-center mb-5">
+                <h2 id="modal-date" class="text-xl font-black text-pink-400 tracking-tight">2026.01.01</h2>
+                <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-pink-50 text-pink-300 hover:bg-pink-100 transition-colors">✕</button>
+            </div>
+
+            <div id="drink-forms-container">
+                <!-- Drink 1 -->
+                <div class="bg-[#fff5f7] rounded-[24px] p-5 mb-4 border border-pink-100">
+                    <h3 class="font-black text-pink-400 flex items-center text-md mb-3">
+                        <span class="bg-pink-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">1</span>
+                        第一杯
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <input type="text" id="shop-1" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-pink-200" placeholder="店家">
+                        <input type="text" id="item-1" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-pink-200" placeholder="品項">
+                        <input type="number" id="price-1" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-pink-200" placeholder="$">
+                    </div>
+                    <div class="space-y-3">
+                        <div id="ice-options-1" class="grid grid-cols-6 gap-1"></div>
+                        <div id="sugar-options-1" class="grid grid-cols-6 gap-1"></div>
+                    </div>
+                </div>
+
+                <!-- Drink 2 -->
+                <div class="bg-[#f0f9ff] rounded-[24px] p-5 mb-5 border border-blue-100">
+                    <h3 class="font-black text-blue-400 flex items-center text-md mb-3">
+                        <span class="bg-blue-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">2</span>
+                        第二杯
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <input type="text" id="shop-2" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-blue-200" placeholder="店家">
+                        <input type="text" id="item-2" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-blue-200" placeholder="品項">
+                        <input type="number" id="price-2" class="rounded-xl border-none bg-white p-3 shadow-inner text-xs focus:ring-1 focus:ring-blue-200" placeholder="$">
+                    </div>
+                    <div class="space-y-3">
+                        <div id="ice-options-2" class="grid grid-cols-6 gap-1"></div>
+                        <div id="sugar-options-2" class="grid grid-cols-6 gap-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-3 mb-5 flex justify-between items-center border border-gray-100">
+                <span class="text-xs font-bold text-gray-400">今日小計：</span>
+                <span class="text-lg font-black text-gray-600">$ <span id="daily-total">0</span></span>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="saveData()" class="flex-1 bg-pink-400 hover:bg-pink-500 text-white font-black py-3 rounded-xl transition-all shadow-md transform active:scale-95 text-sm">保存</button>
+                <button onclick="clearAllToday()" class="px-5 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm">清空</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const iceOptions = ["正常", "少冰", "微冰", "去冰", "常溫", "溫"];
+        const sugarOptions = ["全糖", "少糖", "半糖", "微糖", "一分糖", "無糖"];
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        let drinkData = JSON.parse(localStorage.getItem('drinkData_2026_final')) || {};
+        let currentMonth = new Date().getMonth();
+        let currentSelectedDate = "";
+        let selections = { ice1: "", sugar1: "", ice2: "", sugar2: "" };
+
+        function renderOptionButtons() {
+            [1, 2].forEach(num => {
+                const iceCont = document.getElementById(`ice-options-${num}`);
+                const sugarCont = document.getElementById(`sugar-options-${num}`);
+                const colorClass = num === 1 ? 'pink' : 'blue';
+
+                iceCont.innerHTML = iceOptions.map(opt => `
+                    <button onclick="setOption('ice', ${num}, '${opt}')" id="ice-${num}-${opt}" 
+                    class="opt-btn-${num} py-1.5 text-[9px] font-bold rounded-lg bg-white border border-${colorClass}-50 transition hover:bg-${colorClass}-50">${opt}</button>
+                `).join('');
+
+                sugarCont.innerHTML = sugarOptions.map(opt => `
+                    <button onclick="setOption('sugar', ${num}, '${opt}')" id="sugar-${num}-${opt}" 
+                    class="opt-btn-${num} py-1.5 text-[9px] font-bold rounded-lg bg-white border border-${colorClass}-50 transition hover:bg-${colorClass}-50">${opt}</button>
+                `).join('');
+            });
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth < 0) currentMonth = 11;
+            if (currentMonth > 11) currentMonth = 0;
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('days-grid');
+            const monthDisplay = document.getElementById('current-month-display');
+            grid.style.opacity = '0';
+            
+            setTimeout(() => {
+                grid.innerHTML = '';
+                monthDisplay.innerText = months[currentMonth];
+                const daysInMonth = new Date(2026, currentMonth + 1, 0).getDate();
+                const firstDay = new Date(2026, currentMonth, 1).getDay();
+                
+                for (let i = 0; i < firstDay; i++) {
+                    grid.appendChild(document.createElement('div'));
+                }
+                
+                let mCups = 0;
+                let mCost = 0;
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateKey = `2026-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const daily = drinkData[dateKey] || [];
+                    const cupCount = daily.filter(cup => cup.shop || cup.item).length;
+                    
+                    // Month stats calculation
+                    mCups += cupCount;
+                    daily.forEach(c => mCost += (parseFloat(c.price) || 0));
+
+                    let style = "bg-[#fafafa] text-gray-300 border-gray-50";
+                    if (cupCount === 1) style = "bg-[#ffdce5] text-[#d64d72] shadow-sm border-pink-100";
+                    if (cupCount === 2) style = "bg-gradient-to-br from-[#ffdce5] to-[#d7eefc] text-[#7e57c2] font-black shadow-md border-purple-100";
+
+                    const btn = document.createElement('button');
+                    btn.className = `day-card ${style} rounded-xl flex flex-col items-center justify-center text-xs font-bold border`;
+                    btn.onclick = () => openModal(dateKey);
+                    
+                    btn.innerHTML = `<span>${d}</span>${cupCount > 0 ? `<div class="mt-1 flex gap-0.5">${Array(cupCount).fill('<span class="cup-dot bg-white"></span>').join('')}</div>` : ''}`;
+                    grid.appendChild(btn);
+                }
+
+                // Update Monthly Stats
+                document.getElementById('monthly-count').innerText = mCups;
+                document.getElementById('monthly-spending').innerText = mCost.toLocaleString();
+                
+                grid.style.opacity = '1';
+                updateStats(); // Also update global stats
+            }, 100);
+        }
+
+        function openModal(dateKey) {
+            currentSelectedDate = dateKey;
+            document.getElementById('modal-date').innerText = dateKey.replace(/-/g, ' . ');
+            document.getElementById('modal').classList.remove('hidden');
+            
+            const existing = drinkData[dateKey] || [{}, {}];
+            [1, 2].forEach(num => {
+                const data = existing[num-1] || {};
+                document.getElementById(`shop-${num}`).value = data.shop || "";
+                document.getElementById(`item-${num}`).value = data.item || "";
+                document.getElementById(`price-${num}`).value = data.price || "";
+                setOption('ice', num, data.ice || "");
+                setOption('sugar', num, data.sugar || "");
+            });
+            calculateDailyTotal();
+        }
+
+        function setOption(type, num, val) {
+            selections[`${type}${num}`] = val;
+            const btns = document.querySelectorAll(`.opt-btn-${num}`);
+            btns.forEach(btn => {
+                const activeColor = num === 1 ? 'bg-pink-400' : 'bg-blue-400';
+                if (btn.innerText === val) {
+                    btn.classList.add(activeColor, 'text-white', 'border-transparent');
+                    btn.classList.remove('bg-white');
+                } else if (btn.id.startsWith(type)) {
+                    btn.classList.remove('bg-pink-400', 'bg-blue-400', 'text-white', 'border-transparent');
+                    btn.classList.add('bg-white');
+                }
+            });
+        }
+
+        function calculateDailyTotal() {
+            const p1 = parseFloat(document.getElementById('price-1').value) || 0;
+            const p2 = parseFloat(document.getElementById('price-2').value) || 0;
+            document.getElementById('daily-total').innerText = (p1 + p2);
+        }
+
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+        function clearAllToday() {
+            [1, 2].forEach(num => {
+                document.getElementById(`shop-${num}`).value = "";
+                document.getElementById(`item-${num}`).value = "";
+                document.getElementById(`price-${num}`).value = "";
+                setOption('ice', num, "");
+                setOption('sugar', num, "");
+            });
+            calculateDailyTotal();
+        }
+
+        function saveData() {
+            drinkData[currentSelectedDate] = [1, 2].map(num => ({
+                shop: document.getElementById(`shop-${num}`).value.trim(),
+                item: document.getElementById(`item-${num}`).value.trim(),
+                price: document.getElementById(`price-${num}`).value,
+                ice: selections[`ice${num}`],
+                sugar: selections[`sugar${num}`]
+            }));
+            localStorage.setItem('drinkData_2026_final', JSON.stringify(drinkData));
+            closeModal();
+            renderCalendar();
+        }
+
+        function updateStats() {
+            let totalCups = 0, totalMoney = 0;
+            const shopCounts = {}, itemCounts = {};
+
+            Object.values(drinkData).forEach(day => {
+                day.forEach(cup => {
+                    if (cup.shop || cup.item) {
+                        totalCups++;
+                        totalMoney += parseFloat(cup.price) || 0;
+                        if (cup.shop) shopCounts[cup.shop] = (shopCounts[cup.shop] || 0) + 1;
+                        if (cup.item) itemCounts[cup.item] = (itemCounts[cup.item] || 0) + 1;
+                    }
+                });
+            });
+
+            const getFav = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1])[0]?.[0] || "-";
+
+            document.getElementById('total-count').innerText = totalCups;
+            document.getElementById('total-spending').innerText = totalMoney.toLocaleString();
+            document.getElementById('fav-shop').innerText = getFav(shopCounts);
+            document.getElementById('fav-item').innerText = getFav(itemCounts);
+        }
+
+        document.getElementById('price-1').oninput = calculateDailyTotal;
+        document.getElementById('price-2').oninput = calculateDailyTotal;
+
+        window.onload = () => {
+            renderOptionButtons();
+            renderCalendar();
+        };
+    </script>
+</body>
+</html>
